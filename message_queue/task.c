@@ -8,11 +8,12 @@
 ***********************************************/
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include <string.h>
-#include <unistd.h>
+
 
 struct message {
 	long mtype;
@@ -50,6 +51,7 @@ double calculate(double a, double b, char operation) {
 }
 
 int main(void) {
+
 	int msqid = msgget(IPC_PRIVATE, IPC_CREAT | 0600);
 
 	if (msqid == -1) {
@@ -61,7 +63,8 @@ int main(void) {
 
 	if (pid == 0) {
 
-		double a, b;
+		double a;
+		double b;
 		char operation;
 
 		struct message message;
@@ -71,14 +74,14 @@ int main(void) {
 		memset(&(message.operation), 0, sizeof(char));
 
 		printf("First number: ");
-		scanf("%1f", &(message.a));
+		scanf("%lf", &(message.a));
 
 		printf("Second number: ");
-		scanf("%1f", &(message.b));
+		scanf("%lf", &(message.b));
 
 		printf("Operation: ");
 		scanf(" %c", &operation);
-		(void)strcpy(&(message.operation), operation);
+		(void)strcpy(&(message.operation), &operation);
 
 		if(msgsnd(msqid, &message, sizeof(struct message), 0) == -1) {
 			perror("msgsnd");
@@ -90,6 +93,7 @@ int main(void) {
 		(void)waitpid(pid, NULL, 0);
 
 		struct message message;
+
 		if (msgrcv(msqid, &message, sizeof(struct message), 0, 0) == -1) {
 			perror("msgrcv");
 			return EXIT_FAILURE;
@@ -103,5 +107,5 @@ int main(void) {
 	    }
 	}
 	
-	return EXIT_FAILURE;
+	return EXIT_SUCCESS;
 }
